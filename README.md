@@ -1,5 +1,5 @@
-# Pasqal_Hackathon_Feb25_Team_04
-quaNtumFix
+# quaNtumFix
+
 Patching electronic structure methods with analog quantum computing.
 
 Dependencies - [pyscf](https://github.com/pyscf/pyscf/tree/master/pyscf)
@@ -11,10 +11,9 @@ pip install pyscf
 
 pyscf can also be built from source code, but for our usage, just pip installing it should be sufficient.
 
-
-
 Workflow
 1. Initialize a molecule in pyscf.
+- mol = gto.M(atom = )
 2. Generate electron repulsion integrals.
 3. Hartree Fock can be done to provide a good initial guess for a multireference method.
 4. Setup a multireference calculation
