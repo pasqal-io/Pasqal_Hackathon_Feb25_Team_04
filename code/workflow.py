@@ -3,6 +3,7 @@
 import pyscf
 #import pulser
 import random
+import numpy as np
 #import molecule_to_adjacency
 #import adjacency_to_map 
 #import map_to_circuit
