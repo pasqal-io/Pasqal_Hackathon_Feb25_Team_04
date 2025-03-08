@@ -116,9 +116,9 @@ def XBK(qubit_Hs, qubit_Cs, r, sampler, starting_lam=0, num_samples=1000, streng
 
             #construct qubo from reduced Hamiltonian
             bqm = dimod.higherorder.utils.make_quadratic(convert_dict(H_prime.terms), strength, dimod.SPIN)
-            print(bqm)
+
             qubo, constant = bqm.to_qubo()
-            
+            print(qubo)
             if qubo == {}:
                 break
             
