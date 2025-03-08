@@ -1,0 +1,5 @@
+dwave-neal
+dimod
+symengine
+openfermionpyscf==0.4.0
+openfermion==0.11.0
