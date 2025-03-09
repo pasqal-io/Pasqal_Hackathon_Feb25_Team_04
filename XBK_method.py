@@ -3,10 +3,11 @@ import dimod, math, itertools
 from openfermion.ops import QubitOperator
 from openfermion.utils import count_qubits
 from openfermion import get_sparse_operator
+from neal import SimulatedAnnealingSampler
 
 from helper_functions import *
-
-
+from qadence_qubo import *
+import qadence_qubo
 
 #Applies XBK transformation to an OpenFermion QubitOperator
 def XBK_transform(op, r, p):
@@ -93,7 +94,7 @@ def construct_C(n, r, p):
 
 
 #Find minimum energy and ground state using XBK method
-def XBK(qubit_Hs, qubit_Cs, r, sampler, starting_lam=0, num_samples=1000, strength=1e3, verbose=False):
+def XBK(qubit_Hs, qubit_Cs, r, starting_lam=0, num_samples=1000, strength=1e3, verbose=False):
     
     n = count_qubits(qubit_Hs[0])
     min_energies, ground_states = [],[]
@@ -116,16 +117,38 @@ def XBK(qubit_Hs, qubit_Cs, r, sampler, starting_lam=0, num_samples=1000, streng
 
             #construct qubo from reduced Hamiltonian
             bqm = dimod.higherorder.utils.make_quadratic(convert_dict(H_prime.terms), strength, dimod.SPIN)
-            print(bqm)
             qubo, constant = bqm.to_qubo()
             
             if qubo == {}:
                 break
             
+            Q_calc, mapping = get_mapping_And_Q(qubo)
+            qadence_qubo.Q = Q_calc
+            circuit = q_register(Q_calc)
+            optimum_counts = q_qubo(circuit, Q_calc)
+            energy_map = get_energy_map(optimum_counts, constant, Q_calc)
+            
+            solutions = create_dataFrame(mapping, optimum_counts, energy_map)
             #run sampler
-            response = sampler.sample_qubo(qubo,num_reads=num_samples)
-            solutions = pd.DataFrame(response.data())
+            sampler = SimulatedAnnealingSampler()
 
+            response = sampler.sample_qubo(qubo,num_reads=num_samples)
+            solutions_dimod = pd.DataFrame(response.data())
+
+            print(solutions.shape)
+            
+            print(solutions_dimod.shape)
+            
+            truth_val = (solutions.
+                         sort_values(by='energy').reset_index(drop=True) 
+                         == 
+                         solutions_dimod.
+                         sort_values(by='energy').reset_index(drop=True))
+            print(len(solutions[truth_val['energy'] == False]))
+            print(solutions)
+            print(solutions_dimod)
+            # solutions = solutions_dimod
+            
             #get mininum energy solution
             index = int(solutions[['energy']].idxmin())
             min_energy = round(solutions['energy'][index], 14) + constant

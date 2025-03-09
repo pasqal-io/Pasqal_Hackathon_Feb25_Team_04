@@ -7,8 +7,7 @@ from math import sqrt
 from openfermion.transforms import get_sparse_operator
 from openfermion.ops import QubitOperator
 from openfermion.utils import count_qubits, taper_off_qubits
-
-
+import pandas as pd
 
 '''
 Helper functions to construct Pauli operator Hamiltonian
@@ -351,3 +350,94 @@ def qubit_op_to_expr(qubit_op, angle_folds=0):
                     term *= se.Symbol('Z'+str(num))
         expr += term
     return expr
+
+
+'''
+Helper functions for transformation method
+'''
+def get_mapping_And_Q(qubo):
+    deck = set()
+    for key in qubo.keys():
+        deck.add(key[0])
+        deck.add(key[1])
+
+    int_list = []
+    str_list = []
+    for elem in deck:
+        if isinstance(elem, str):
+            str_list.append(elem)
+        elif (isinstance(elem, int)):
+            int_list.append(elem)
+
+    #post processing
+    max_int = -1
+    if len(int_list) != 0:
+        max_int = max(int_list)
+
+    mapping = {}
+
+    for elem in str_list:
+        mapping[elem] = max_int+1
+        max_int+=1
+
+    for elem in str_list:
+        int_list.append(mapping[elem])
+
+    Q = np.zeros((len(int_list), len(int_list)))
+    ans = qubo
+    # not optimized, assuming that Q is real and symmetric
+    for a,b in ans.keys():
+        ans_one = ans[(a,b)]
+        if isinstance(a, str):
+            a = mapping[a]
+        if isinstance(b, str):
+            b = mapping[b]
+        Q[a][b] = ans_one
+        # abuse on the property of symmetric
+        Q[b][a] = ans_one
+    return Q, mapping
+
+def convert_bitstring_array(a):
+    ans = []
+    for i in a:
+        ans.append(int(i))
+    return ans
+
+def get_energy_map(optimal_counts, constant, Q):
+    energy_map = {}
+    for key in optimal_counts.keys():
+        x = np.array(convert_bitstring_array(key))
+        energy_map[key] = x.T @ Q @ x + constant
+    return energy_map
+
+def create_dataFrame(mapping, optimal_counts, energy_map):
+    # columns = list(mapping.keys())
+    columns = []
+    columns.append('sample')
+    columns.append('energy')
+
+    k = [i for i in mapping.keys()]
+
+    data_sample = []
+    data_energy = []
+    data_counts = []
+    for key, value in optimal_counts.items():
+        temp = {}
+        temp_bit = convert_bitstring_array(key)
+        for j in range(len(k)):
+            temp[k[j]] = temp_bit[j]
+        for j in range(value):
+            data_energy.append(-1*energy_map[key])
+            data_sample.append(temp)
+    
+    # for value in optimal_counts.values():
+    #     data_counts.append(value)
+
+    for value in range(1000):
+        data_counts.append(1)
+    
+    data = pd.DataFrame(np.array(data_sample), columns =['sample'])
+    data['energy'] = pd.DataFrame(data_energy)
+    data['num_occurrences'] = pd.DataFrame(data_counts)
+
+    return data
