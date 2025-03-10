@@ -9,6 +9,12 @@ Installing pyscf
 pip install pyscf
 ```
 
+Code adaptations(XBK and other functions and code) from the paper below and github(https://github.com/jcopenh/Quantum-Chemistry-with-Annealers).
+```
+J. Copenhaver, A. Wasserman, and B. Wehefritz-Kaufmann. “Using Quantum Annealers to Calculate Ground State 
+    Properties of Molecules,” (2020), arXiv:2009.10779v2 [quant-ph].
+```
+
 pyscf can also be built from source code, but for our usage, just pip installing it should be sufficient.
 
 
